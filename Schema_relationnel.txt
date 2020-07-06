@@ -1,0 +1,109 @@
+# Schema relationnel
+
+
+### Ressource 
+Ressource(#code : ENTIER,  genre : VARCHAR, email_p => Personnel) avec email_p NON NULL
+
+RessourceLivre(#code_ressource => Ressource, ISBN : ENTIER, resume : VARCHAR, langue : VARCHAR) avec ISBN Unique
+
+RessourceFilm(#code_ressource => Ressource, langue : VARCHAR, synopsis[0..1] : VARCHAR, longueur : VARCHAR)
+
+RessourceEnregistrement(#code_ressource => Ressource, longueur : VARCHAR)
+
+
+#### Contraintes ressources : 
+* INTERSECTION(PROJECTION(RessourceLivre, code_ressource),PROJECTION(RessourceFilm, code_ressource))={}
+* INTERSECTION(PROJECTION(RessourceLivre, code_ressource),PROJECTION(RessourceEnregistrement, code_ressource))={}
+* INTERSECTION(PROJECTION(RessourceFilm, code_ressource),PROJECTION(RessourceEnregistrement, code_ressource))={}
+
+* UNION(UNION(PROJECTION(RessourceFilm, code_ressource),PROJECTION(RessourceEnregistrement, code_ressource)),PROJECTION(RessourceLivre, code_ressource))=PROJECTION(Ressource, code)
+
+
+
+### Information 
+
+Information(#titre : VARCHAR, #date_apparition : DATE(YYYY-MM-DD), #editeur : VARCHAR, prix : REEL, code_ressource => Ressource) avec {titre,date_apparition,editeur} unique AND code_ressource unique
+
+
+### Exemplaire 
+Exemplaire ( #code_exemplaire : ENTIER,#code_ressource => Ressource, etat : {'neuf', 'bon', 'abime', 'perdu'}, code_classification : ENTIER,  ajoute_par => Personnel ) avec ajoute_par NOT NULL ET code_ressource NON NULL
+
+
+### Contributeur 
+
+Auteur(#id : ENTIER , prenom : VARCHAR, nom : VARCHAR, nationalite : VARCHAR , date_naissance : DATE(YYYY-MM-DD))
+
+Interprete(#id : ENTIER , prenom : VARCHAR, nom : VARCHAR, nationalite : VARCHAR , date_naissance : DATE(YYYY-MM-DD))
+
+Realisateur(#id : ENTIER , prenom : VARCHAR, nom : VARCHAR, nationalite : VARCHAR , date_naissance : DATE(YYYY-MM-DD))
+
+Acteur(#id : ENTIER , prenom : VARCHAR, nom : VARCHAR, nationalite : VARCHAR , date_naissance : DATE(YYYY-MM-DD))
+
+Compositeur(#id : ENTIER , prenom : VARCHAR, nom : VARCHAR, nationalite : VARCHAR , date_naissance : DATE(YYYY-MM-DD))
+
+
+Ecrire(#code => RessourceLivre, id_auteur => Auteur)
+PROJECTION(Ecrire,code)=PROJECTION(RessourceLivre, code_ressource)
+
+Composer(#code => RessourceEnregistrement, id_compositeur => Compositeur)
+PROJECTION(Composer,code)=PROJECTION(RessourceEnregistrement, code_ressource)
+
+Interpreter(#code => RessourceEnregistrement, id_interprete => Interprete)
+PROJECTION(Interpreter,code)=PROJECTION(RessourceEnregistrement, code_ressource)
+
+Realiser(#code => RessourceFilm, id_realisateur => Realisateur)
+PROJECTION(Realiser,code)=PROJECTION(RessourceFilm, code_ressource)
+
+Jouer(#code => RessourceFilm, id_acteur => Acteur)
+
+
+
+
+
+
+
+### Classes d'associations entre adhérents et exemplaires
+
+* Emprunt(#email => adherent, #code => Exemplaire, #code_ressource => Exemplaire,#date_debut : DATE(YYYY-MM -DD), duree_pret : INTEGER, date_fin_reel : DATE(YYYY-MM-DD)) 
+
+* Sanction (#email => adherent, #code => Exemplaire, #code_ressource => Exemplaire, #date_sanction : DATE(YYYY-MM-DD), jour_retard : ENTIER, etat_retour : {'abime','perdu'}, frais : reel,effectuée : booléen, t = { 'retard', 'remboursement'}) 
+avec effectuée not null
+##### Héritage exclusif et non complet
+* ( t = 'retard' AND jours_retard NOT NULL AND frais IS NULL AND etat_retour IS NULL AND payee IS NULL)
+OR ( t = 'remboursement' AND frais NOT NULL  AND payee NOT NULL AND jours_retard IS NULL)
+
+
+
+	
+### Utilisateurs
+
+Adherent ( #email : VARCHAR, nom : VARCHAR, prenom : VARCHAR, adresse[0..1] : VARCHAR, numero_tel : VARCHAR, date_naissance : DATE(YYYY-MM-DD), sanctionne : booleen, blackliste : booleen, ajoute_par => Personnel ) 
+
+Personnel ( #email : VARCHAR, nom : VARCHAR, prenom : VARCHAR, adresse[0..1] : VARCHAR)
+
+
+
+Propose (#email_a => Adherent, #code_ressource => Ressource )
+
+####Contrainte entre adherent et ressources
+
+PROJECTION(Ressource,code) = PROJECTION(Propose,code_ressource)
+
+### Compte
+
+Compte(#login : VARCHAR, mdp : VARCHAR email_a => Adherent, email_p => Personnel)
+
+#### Contrainte de Compte
+* email_a XOR email_p
+* PROJECTION(Personnel,email) = PROJECTION(Compte, email_p) AND PROJECTION(Adherent,email) = PROJECTION(Compte, email_a)
+
+
+### Periode adhesion
+
+Periode_adhesion(#numero_adhesion: ENTIER, date_debut : DATE(YYYY-MM-DD), date_fin[0..1] : DATE(YYYY-MM-DD))
+
+Est_valable_dans(#numero_a => Periode_adhesion, #email_a => Adherent)
+
+#### Contraintes entre adhérents et periode adhesion
+
+* PROJECTION(Adherent, email) = PROJECTION(Est_valable,email_a) AND PROJECTION(Periode_adhesion,numero_adhesioin) = PROJECTION(Est_valable_dans, numero_a)

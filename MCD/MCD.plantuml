@@ -1,0 +1,159 @@
+@startuml Bibliotheque
+note "Tous les attributs sont non nulls" as N1
+package "Sanctions" #DDDDDD {
+Sanction <|-- Retard
+Sanction <|-- Remboursement
+}
+
+package "Utilisateurs" #DDDDDD {
+Utilisateur <|-- Adhérent
+Utilisateur <|-- Personnel
+Adhérent "1..*" - "1..*" PeriodeAdhesion : < est valable dans
+Utilisateur "1" - "1..*" Compte : > possède
+}
+
+package "Contributeurs" #DDDDDD {
+Contributeur <|-- Auteur
+Contributeur <|-- Compositeur
+Contributeur <|-- Interprete
+Contributeur <|-- Realisateur
+Contributeur <|-- Acteur
+}
+
+package "Ressources" #DDDDDD {
+Ressource <|-- Livre
+Ressource <|-- Film
+Ressource <|-- Enregistrement_musical
+Ressource *-- "*" Exemplaire
+Ressource "1" --- "1" Information : > possède
+}
+
+Adhérent "1..*" ------- "*" Ressource : > propose
+Personnel "1" - "*" Exemplaire : > ajoute
+Personnel "1" -- "*" Ressource : > crée
+Personnel "1" - "*" Adhérent : > ajoute
+
+abstract Class Utilisateur{
+{field} email : VARCHAR {clef}
+{field} nom : VARCHAR
+{field} prenom : VARCHAR
+{field} adresse[0..1] : VARCHAR
+{method} 
+}
+
+class Compte{
+{field} login : VARCHAR (clef)
+{field} mdp : VARCHAR
+}
+
+abstract Class Contributeur{
+{field} nom : VARCHAR
+{field} prenom : VARCHAR
+{field} nationalite : VARCHAR
+{field} date_naissance : DATE
+{method} 
+}
+
+Class Auteur{
+}
+
+Class Compositeur{
+}
+
+Class Interprete{
+}
+
+Class Realisateur{
+}
+
+Class Acteur{
+}
+
+Adhérent "*" - "*" Exemplaire
+(Adhérent , Exemplaire) .. Emprunt
+Adhérent "*" - "*" Exemplaire
+(Adhérent, Exemplaire) .. Sanction
+
+Auteur "1..*" - "*" Livre : > écrit
+Interprete "1..*" - "*" Enregistrement_musical : > interprète
+Realisateur "1..*" - "*" Film : > réalise
+Acteur "*" - "*" Film : > se joue dans
+Compositeur "1..*" ---- "*" Enregistrement_musical : > compose
+
+Class Emprunt{
+{field} date_debut : DATE
+{field} duree_pret : ENTIER
+{field} date_fin_reel : DATE
+{method} +date_fin_normal() : DATE
+}
+
+
+abstract Class Sanction{
+{field} date_sanction : DATE
+{field} effectue : booléen
+}
+
+Class Retard{
+{field} jour_retard : ENTIER
+}
+
+Class Remboursement{
+{field} etat_retour : {abime, perdu}
+{field} frais : REEL
+}
+
+
+
+Class Adhérent{
+{field} numero_tel : VARCHAR
+{field} date_naissance : DATE
+{field} Sanctionne : booléen
+{field} Blackliste : booléen
+{method} +nombre_emprunts() : ENTIER
+{method} +somme_sanction() : REEL
+}
+
+Class PeriodeAdhesion{
+{field} date_debut : DATE
+{field} date_fin : DATE
+}
+
+abstract Class Ressource{
+{field} code : ENTIER (clef)
+{field} genre : VARCHAR
+{method} 
+}
+
+class Information{
+{field} titre : VARCHAR
+{field} date_apparition : DATE
+{field} editeur : VARCHAR
+{field} prix : REEL
+}
+note top: {titre,date_apparition,editeur} clef
+
+Class Livre{
+{field} ISBN: ENTIER (clef)
+{field} resume[0..1] : VARCHAR
+{field} langue : VARCHAR
+}
+
+Class Enregistrement_musical{
+{field} longueur : VARCHAR
+}
+
+Class Film{
+{field} langue : VARCHAR
+{field} synopsis[0..1] : VARCHAR
+{field} longueur : VARCHAR
+}
+
+Class Exemplaire{
+{field} Code_Exemplaire: ENTIER (clef locale)
+{field} Code_ressource: ENTIER (clef étrangère)
+{field} etat : {neuf, bon, abime, perdu}
+{field} code_classification : ENTIER
+}
+
+
+@enduml
